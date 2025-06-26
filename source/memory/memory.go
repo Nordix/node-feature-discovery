@@ -111,6 +111,11 @@ func (s *memorySource) Discover() error {
 	if swap, err := detectSwap(); err != nil {
 		klog.ErrorS(err, "failed to detect Swap nodes")
 	} else {
+		// // Detect Swap behavior
+		// behavior := detectSwapBehavior()
+		// if behavior != nil {
+		// 	s.features.Attributes[SwapFeature] = nfdv1alpha1.AttributeFeatureSet{Elements: swap}
+		// }
 		s.features.Attributes[SwapFeature] = nfdv1alpha1.AttributeFeatureSet{Elements: swap}
 	}
 
@@ -154,6 +159,15 @@ func detectSwap() (map[string]string, error) {
 		"enabled": strconv.FormatBool(lines > 1),
 	}, nil
 }
+
+// // detectSwapBehavior detects the swap behavior of the system
+// func detectSwapBehavior() (string, error) {
+// 	klConfig, err = kubeconf.GetKubeletConfigFromLocalFile(u.Path)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to read kubelet config: %w", err)
+// 	}
+// 	return klConfig, err
+// }
 
 // detectNuma detects NUMA node information
 func detectNuma() (map[string]string, error) {

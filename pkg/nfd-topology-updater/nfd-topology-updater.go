@@ -130,6 +130,14 @@ func (w *nfdTopologyUpdater) detectTopologyPolicyAndScope() (string, string, err
 	return klConfig.TopologyManagerPolicy, klConfig.TopologyManagerScope, nil
 }
 
+func (w *nfdTopologyUpdater) detectSwapBehavior() (string, error) {
+	klConfig, err := w.kubeletConfigFunc()
+	if err != nil {
+		return "", err
+	}
+	return klConfig.MemorySwap.SwapBehavior, nil
+}
+
 func (w *nfdTopologyUpdater) Healthz(writer http.ResponseWriter, _ *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 }
@@ -314,6 +322,14 @@ func (w *nfdTopologyUpdater) updateNRTTopologyManagerInfo(nrt *v1alpha2.NodeReso
 	if err != nil {
 		return fmt.Errorf("failed to detect TopologyManager's policy and scope: %w", err)
 	}
+
+	mode, err := w.detectSwapBehavior()
+	if err != nil {
+		return fmt.Errorf("failed to detect swap behavior: %w", err)
+	}
+	fmt.Println("########################")
+	fmt.Println("Swap behavior detected:", mode)
+	fmt.Println("########################")
 
 	tmAttributes := createTopologyAttributes(policy, scope)
 	deprecatedTopologyPolicies := []string{string(topologypolicy.DetectTopologyPolicy(policy, scope))}

@@ -9,9 +9,14 @@ resources:
 - ../../base/master
 - ../../base/worker-daemonset
 - ../../base/gc
+- ../../base/topologyupdater-daemonset
+- ../../base/rbac-topologyupdater
 - namespace.yaml
 
 components:
 - ../../components/worker-config
 - ../../components/common
 - ../../components/master-config
+- ../../components/topology-updater
+- ../../components/topology-updater-config
+
