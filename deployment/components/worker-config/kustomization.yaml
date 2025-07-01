@@ -5,3 +5,9 @@ configMapGenerator:
 - files:
   - nfd-worker.conf=nfd-worker.conf.example
   name: nfd-worker-conf
+
+# patches:
+# - path: worker-securitycontext.yaml
+#   target:
+#     labelSelector: app=nfd-worker
+#     name: nfd-worker
