@@ -1,4 +1,6 @@
 # -*- mode: Python -*-
+# Anonymous, ephemeral image registry.
+default_registry('ttl.sh')
 
 BASE_IMAGE_MINIMAL="gcr.io/distroless/base"
 BASE_IMAGE_FULL="debian:bullseye-slim"
