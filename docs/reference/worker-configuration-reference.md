@@ -245,6 +245,12 @@ Comma-separated list of `pattern=N` settings for file-filtered logging.
 
 Default: *empty*
 
+### core.kubeletConfigPath
+
+Specifies the absolute path to the kubelet configuration file on the worker node.
+
+Default: `/var/lib/kubelet/config.yaml`
+
 ## sources
 
 The `sources` section contains feature source specific configuration parameters.

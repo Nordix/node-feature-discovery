@@ -84,6 +84,19 @@ Example:
 nfd-worker -kubeconfig ${HOME}/.kube/config
 ```
 
+### -kubelet-config-path
+
+The `-kubeconfig-path` flag specifies the absolute path to the kubelet
+configuration file on the worker node.
+
+Default: `/var/lib/kubelet/config.yaml`
+
+Example:
+
+```bash
+nfd-worker -kubeconfig-path /var/lib/kubelet/config.yaml
+```
+
 ### -feature-sources
 
 The `-feature-sources` flag specifies a comma-separated list of enabled feature
