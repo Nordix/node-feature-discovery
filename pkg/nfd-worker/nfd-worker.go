@@ -19,6 +19,7 @@ package nfdworker
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -64,6 +65,10 @@ import (
 	_ "sigs.k8s.io/node-feature-discovery/source/storage"
 	_ "sigs.k8s.io/node-feature-discovery/source/system"
 	_ "sigs.k8s.io/node-feature-discovery/source/usb"
+)
+
+const (
+	kubeletSecurePort = 10250
 )
 
 // NfdWorker is the interface for nfd-worker daemon
@@ -168,7 +173,8 @@ func (f *nfdWorkerOpt) apply(n *nfdWorker) {
 }
 
 // NewNfdWorker creates new NfdWorker instance.
-func NewNfdWorker(opts ...NfdWorkerOption) (NfdWorker, error) {
+func NewNfdWorker(kubeletConfigURI, aPIAuthTokenFile string, opts ...NfdWorkerOption) (NfdWorker, error) {
+
 	nfd := &nfdWorker{
 		config:              &NFDConfig{},
 		kubernetesNamespace: utils.GetKubernetesNamespace(),
@@ -179,18 +185,12 @@ func NewNfdWorker(opts ...NfdWorkerOption) (NfdWorker, error) {
 		nfd.configFilePath = filepath.Clean(nfd.args.ConfigFile)
 	}
 
-	for _, o := range opts {
-		o.apply(nfd)
-	}
-
-	kubeletConfigFunc, err := kubeconf.GetKubeletConfigFunc(nfd.args.KubeletConfigURI, nfd.args.APIAuthTokenFile)
+	kubeletConfigFunc, err := kubeconf.GetKubeletConfigFunc(kubeletConfigURI, aPIAuthTokenFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize kubeletConfigFunc: %w", err)
 	}
 
-	nfd = &nfdWorker{
-		kubeletConfigFunc: kubeletConfigFunc,
-	}
+	nfd.kubeletConfigFunc = kubeletConfigFunc
 
 	for _, o := range opts {
 		o.apply(nfd)
@@ -210,6 +210,11 @@ func NewNfdWorker(opts ...NfdWorkerOption) (NfdWorker, error) {
 	}
 
 	return nfd, nil
+}
+
+func isIPv6(addr string) bool {
+	ip := net.ParseIP(addr)
+	return ip != nil && strings.Count(ip.String(), ":") >= 2
 }
 
 func newDefaultConfig() *NFDConfig {
@@ -274,9 +279,10 @@ func (w *nfdWorker) setOwnerReference() error {
 	if !w.config.Core.NoOwnerRefs {
 		// Get pod owner reference
 		podName := os.Getenv("POD_NAME")
+		podNamespace := os.Getenv("POD_NAMESPACE")
 		// Add pod owner reference if it exists
 		if podName != "" {
-			if selfPod, err := w.k8sClient.CoreV1().Pods(w.kubernetesNamespace).Get(context.TODO(), podName, metav1.GetOptions{}); err != nil {
+			if selfPod, err := w.k8sClient.CoreV1().Pods(podNamespace).Get(context.TODO(), podName, metav1.GetOptions{}); err != nil {
 				klog.ErrorS(err, "failed to get self pod, cannot inherit ownerReference for NodeFeature")
 				return err
 			} else {
@@ -335,7 +341,10 @@ func (w *nfdWorker) Run() error {
 	if err != nil {
 		return err
 	}
-	memory.SetSwapMode(klConfig.MemorySwap.SwapBehavior)
+
+	if err := memory.SetSwapBehavior(klConfig); err != nil {
+		return fmt.Errorf("failed to detect swap bahaviour: %s", err)
+	}
 
 	err = w.runFeatureDiscovery()
 	if err != nil {

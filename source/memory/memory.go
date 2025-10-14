@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
 
+	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/api/nfd/v1alpha1"
 	"sigs.k8s.io/node-feature-discovery/pkg/utils"
 	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
@@ -63,8 +64,12 @@ var (
 	swapBehavior        string
 )
 
-func SetSwapMode(behavior string) {
-	swapBehavior = behavior
+func SetSwapBehavior(kubeletConf *kubeletconfigv1beta1.KubeletConfiguration) error {
+	if kubeletConf == nil {
+		return fmt.Errorf("kubelet configuration is nil")
+	}
+	swapBehavior = kubeletConf.MemorySwap.SwapBehavior
+	return nil
 }
 
 // Name returns an identifier string for this feature source.

@@ -50,7 +50,7 @@ func main() {
 	}
 	features.NFDMutableFeatureGate.AddFlag(flags)
 
-	args := parseArgs(flags, os.Args[1:]...)
+	args, kubeletConfigURI, aPIAuthTokenFile := parseArgs(flags, os.Args[1:]...)
 
 	if *printVersion {
 		fmt.Println(ProgramName, version.Get())
@@ -63,7 +63,8 @@ func main() {
 	}
 
 	// Get new NfdWorker instance
-	instance, err := worker.NewNfdWorker(worker.WithArgs(args))
+	klog.Info(worker.WithArgs(args))
+	instance, err := worker.NewNfdWorker(kubeletConfigURI, aPIAuthTokenFile, worker.WithArgs(args))
 	if err != nil {
 		klog.ErrorS(err, "failed to initialize NfdWorker instance")
 		os.Exit(1)
@@ -75,7 +76,7 @@ func main() {
 	}
 }
 
-func parseArgs(flags *flag.FlagSet, osArgs ...string) *worker.Args {
+func parseArgs(flags *flag.FlagSet, osArgs ...string) (*worker.Args, string, string) {
 	args, overrides := initFlags(flags)
 
 	_ = flags.Parse(osArgs)
@@ -112,8 +113,7 @@ func parseArgs(flags *flag.FlagSet, osArgs ...string) *worker.Args {
 			args.Overrides.NoOwnerRefs = overrides.NoOwnerRefs
 		}
 	})
-
-	return args
+	return args, args.KubeletConfigURI, args.APIAuthTokenFile
 }
 
 func initFlags(flagset *flag.FlagSet) (*worker.Args, *worker.ConfigOverrideArgs) {

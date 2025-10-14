@@ -38,7 +38,7 @@ CHART_VERSION ?= $(shell echo $(VERSION) | cut -c2-)
 IMAGE_REGISTRY ?= registry.k8s.io/nfd
 IMAGE_TAG_NAME ?= $(VERSION)
 IMAGE_EXTRA_TAG_NAMES ?=
-
+GOOLCHAIN_MODE ?= $(shell $(GO_CMD) env GOVERSION)+auto
 IMAGE_NAME := node-feature-discovery
 IMAGE_REPO := $(IMAGE_REGISTRY)/$(IMAGE_NAME)
 IMAGE_TAG := $(IMAGE_REPO):$(IMAGE_TAG_NAME)
@@ -186,7 +186,7 @@ helm-push:
 	helm push node-feature-discovery-$(CHART_VERSION).tgz oci://${IMAGE_REGISTRY}/charts
 
 test:
-	$(GO_CMD) test -covermode=atomic -coverprofile=coverage.out ./cmd/... ./pkg/... ./source/...
+	GOTOOLCHAIN=${TOOOLCHAIN_MODE} $(GO_CMD) test -covermode=atomic -coverprofile=coverage.out ./cmd/... ./pkg/... ./source/...
 	cd api/nfd && $(GO_CMD) test -covermode=atomic -coverprofile=coverage.out ./...
 
 e2e-test:
